@@ -1,0 +1,50 @@
+{
+  "posts": [
+    {
+      "id": 2,
+      "title": "Technique de tissage de malde ",
+      "image": "loom-4564223_1280.jpg",
+      "content": "un technik de fifou carr\u00e9ment ",
+      "comments": [],
+      "date": "2024-09-20T15:49:37.352830",
+      "likes": 0,
+      "ratings": [],
+      "average_rating": 0.0
+    },
+    {
+      "id": 3,
+      "title": "gnjkogazno",
+      "image": "74168-5036359.jpg",
+      "content": "gdazbjobguoa",
+      "comments": [],
+      "date": "2024-09-20T15:51:00.137378",
+      "likes": 0,
+      "ratings": [
+        1
+      ],
+      "average_rating": 1.0
+    },
+    {
+      "id": 4,
+      "title": "guifgyi",
+      "image": "tissage-simple.webp",
+      "content": "vyuifgyi",
+      "comments": [],
+      "date": "2024-09-20T16:01:04.286540",
+      "likes": 0,
+      "ratings": [],
+      "average_rating": 0.0
+    },
+    {
+      "id": 4,
+      "title": "niogsq",
+      "image": "loom-4564223_1280.jpg",
+      "content": "vsq jifsbUIO",
+      "comments": [],
+      "date": "2024-09-20T16:03:12.854466",
+      "likes": 0,
+      "ratings": [],
+      "average_rating": 0.0
+    }
+  ]
+}

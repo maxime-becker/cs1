@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Blog de Tissage</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.6.0/css/all.css">
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+    <!-- Header -->
+    <header class="bg-white shadow-md py-6">
+        <div class="container mx-auto text-center">
+            <h1 class="text-3xl font-bold text-gray-900">Mon Blog de Tissage</h1>
+            <nav class="mt-4">
+                <a href="/" class="text-blue-600 hover:text-blue-800 mx-4">Accueil</a>
+                <a href="/about" class="text-blue-600 hover:text-blue-800 mx-4">À propos</a>
+                <a href="/contact" class="text-blue-600 hover:text-blue-800 mx-4">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- App Container -->
+    <div id="app" class="container mx-auto py-12">
+        <!-- Search Bar -->
+        <div class="search-bar mb-6 flex justify-center">
+            <input v-model="searchQuery" placeholder="Rechercher des posts..." class="border border-gray-300 rounded-lg p-2 w-full max-w-lg">
+            <button @click="searchPosts" class="ml-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Rechercher</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters mb-6 text-center">
+            <label class="mr-4">
+                <input type="radio" v-model="sortOption" value="recent" class="mr-2"> Trier par : Derniers ajouts
+            </label>
+            <label>
+                <input type="radio" v-model="sortOption" value="popular" class="mr-2"> Populaires
+            </label>
+        </div>
+
+        <!-- Posts Section -->
+        <div id="posts" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div v-if="filteredPosts.length === 0" class="col-span-full text-center text-gray-600">
+                <p v-if="searchQuery">Aucun résultat trouvé pour "{{ searchQuery }}"</p>
+                <p v-else>Aucun post n'est disponible pour le moment.</p>
+            </div>
+
+            <div v-for="post in sortedPosts" class="post bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-xl font-bold mb-2">{{ post.title }}</h2>
+                <img :src="`/images/${post.image}`" alt="Image" class="w-full h-48 object-cover rounded-lg mb-4">
+                <p class="mb-4">{{ post.content }}</p>
+
+                <div class="likes flex items-center">
+                    <span class="text-gray-600">{{ post.likes }} j'aime</span>
+                    <button @click="likePost(post.id)" class="ml-4 bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">Like</button>
+                </div>
+
+                <!-- Section de notation -->
+                <div class="rating mt-4">
+                    <p>Note moyenne : {{ post.average_rating.toFixed(1) }} / 5</p>
+                    <div class="flex">
+                        <span v-for="n in 5" :key="n" class="star cursor-pointer text-2xl"
+                              :class="n <= post.average_rating ? 'text-yellow-500' : 'text-gray-300'"
+                              @click="ratePost(post.id, n)">
+                            ★
+                        </span>
+                    </div>
+                </div>
+
+                <p class="mt-4 text-gray-500">Posté le : {{ formatDate(post.date) }}</p>
+
+                <!-- Commentaires Section -->
+                <div class="comments mt-6">
+                    <h3 class="text-lg font-bold">Commentaires</h3>
+                    <div v-for="(comment, index) in post.comments" class="comment bg-gray-100 p-4 rounded-lg mt-2 flex justify-between">
+                        <p>{{ comment }}</p>
+                        <button @click="deleteComment(post.id, index)" class="text-red-600 hover:text-red-800">Supp</button>
+                    </div>
+
+                    <input v-model="newComment" placeholder="Laissez un commentaire" class="border border-gray-300 rounded-lg p-2 w-full mt-4">
+                    <button @click="addComment(post.id)" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Ajouter</button>
+                </div>
+
+                <button @click="deletePost(post.id)" class="mt-4 text-red-600 hover:text-red-800">Supp</button>
+            </div>
+        </div>
+
+        <!-- Ajouter un post -->
+        <div id="add-post" class="mt-12 bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-bold mb-4">Ajouter un nouveau post</h2>
+            <input v-model="newPost.title" placeholder="Titre du post" class="border border-gray-300 rounded-lg p-2 w-full mb-4">
+            <textarea v-model="newPost.content" placeholder="Contenu du post" class="border border-gray-300 rounded-lg p-2 w-full mb-4"></textarea>
+            <input type="file" @change="onFileChange" class="mb-4">
+            <button @click="createPost" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700">Créer le post</button>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    posts: [],
+                    searchQuery: '',
+                    newComment: '',
+                    sortOption: 'recent',
+                    newPost: {
+                        title: '',
+                        content: '',
+                    },
+                    selectedFile: null,  // Pour stocker le fichier sélectionné
+                };
+            },
+            computed: {
+                filteredPosts() {
+                    if (!this.searchQuery) {
+                        return this.posts;
+                    }
+                    const query = this.searchQuery.toLowerCase();
+                    return this.posts.filter(post => post.title.toLowerCase().includes(query) || post.content.toLowerCase().includes(query));
+                },
+                sortedPosts() {
+                    if (this.sortOption === 'popular') {
+                        return this.filteredPosts.sort((a, b) => b.likes - a.likes);
+                    }
+                    return this.filteredPosts.sort((a, b) => new Date(b.date) - new Date(a.date));
+                }
+            },
+            async mounted() {
+                await this.getPosts();
+            },
+            methods: {
+                async getPosts() {
+                    const response = await axios.get('/posts');
+                    this.posts = response.data.posts;
+                },
+                async ratePost(postId, rating) {
+                    try {
+                        await axios.post(`/posts/${postId}/rate`, { rating: rating });
+                        await this.getPosts();  // Recharge les posts pour mettre à jour la note moyenne
+                    } catch (error) {
+                        console.error("Erreur lors de la notation du post : ", error);
+                    }
+                },
+                async likePost(postId) {
+                    await axios.post(`/posts/${postId}/like`);
+                    await this.getPosts();
+                },
+                async addComment(postId) {
+                    const response = await axios.post(`/posts/${postId}/comments`, { comment: this.newComment });
+                    this.newComment = '';
+                    await this.getPosts();
+                },
+                async deletePost(postId) {
+                    await axios.delete(`/posts/${postId}`);
+                    await this.getPosts();
+                },
+                async deleteComment(postId, commentIndex) {
+                    try {
+                        await axios.delete(`/posts/${postId}/comments/${commentIndex}`);
+                        await this.getPosts();
+                    } catch (error) {
+                        console.error("Erreur lors de la suppression du commentaire : ", error);
+                    }
+                },
+                async onFileChange(event) {
+                    this.selectedFile = event.target.files[0];  // Récupère le fichier sélectionné
+                },
+                async createPost() {
+                    const formData = new FormData();
+                    formData.append('file', this.selectedFile);
+                    formData.append('title', this.newPost.title);
+                    formData.append('content', this.newPost.content);
+
+                    await axios.post('/posts', formData);
+                    this.newPost = { title: '', content: '' };
+                    this.selectedFile = null;
+                    await this.getPosts();  // Recharge les posts après ajout
+                },
+                formatDate(date) {
+                    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                    return new Date(date).toLocaleDateString('fr-FR', options);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+
+</html>
