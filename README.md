@@ -16,7 +16,9 @@ Afficher les derniers posts ajoutés et des posts populaires.
 
 Redirection vers des pages (1 point)
 Ajouter des liens vers d'autres pages comme "À propos", "Contact", etc.
+
 -----------------------------------------------------------------------------------------------
+
 Nice to Have :
 Inscription à une newsletter (2 points)
 Permettre aux utilisateurs de s'inscrire pour recevoir des mises à jour par e-mail.
